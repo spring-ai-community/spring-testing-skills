@@ -10,6 +10,8 @@ on:
 
 jobs:
   release:
+    permissions:
+      contents: write
     uses: spring-ai-community/community-workflows/.github/workflows/maven-central-release.yml@main
     with:
       version: ${{ inputs.version }}
