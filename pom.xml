@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springaicommunity</groupId>
+        <artifactId>spring-ai-community-parent</artifactId>
+        <version>1.0.1</version>
+    </parent>
+
+    <groupId>org.springaicommunity</groupId>
+    <artifactId>spring-testing-skills</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Spring Testing Skills</name>
+    <description>SkillsJars for testing Spring applications — curated patterns for JPA, REST, Security, WebFlux, WebSocket, and test fundamentals</description>
+    <url>https://github.com/spring-ai-community/spring-testing-skills</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>markpollack</id>
+            <name>Mark Pollack</name>
+            <roles>
+                <role>lead</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <scm>
+        <url>https://github.com/spring-ai-community/spring-testing-skills</url>
+        <connection>scm:git:git://github.com/spring-ai-community/spring-testing-skills.git</connection>
+        <developerConnection>scm:git:git@github.com:spring-ai-community/spring-testing-skills.git</developerConnection>
+    </scm>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.skillsjars</groupId>
+                <artifactId>maven-plugin</artifactId>
+                <version>0.0.6</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>package</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

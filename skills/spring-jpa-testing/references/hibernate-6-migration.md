@@ -1,0 +1,247 @@
+# JPA Testing: Hibernate 6.x / 7.x Migration Pitfalls and Spring Boot 4 Package Changes
+
+Covers the Hibernate 6.x and 7.x migration pitfalls that affect test code specifically, plus the Spring Boot 3.x → 4.x test autoconfigure package reorganization. All package names here are Spring Boot 4 / Spring Framework 7.
+
+---
+
+## Spring Boot 3.x → 4.x: Test Package Reorganization
+
+All test autoconfigure packages moved in Spring Boot 4. Using Boot 3 import paths in Boot 4 projects will cause `ClassNotFoundException` at compile time.
+
+| Annotation / Class | Boot 3.x Package | Boot 4.x Package |
+|---|---|---|
+| `@DataJpaTest` | `org.springframework.boot.test.autoconfigure.orm.jpa` | `org.springframework.boot.data.jpa.test.autoconfigure` |
+| `@AutoConfigureTestDatabase` | `org.springframework.boot.test.autoconfigure.orm.jpa` | `org.springframework.boot.data.jpa.test.autoconfigure` |
+| `TestEntityManager` | `org.springframework.boot.test.autoconfigure.orm.jpa` | `org.springframework.boot.jpa.test.autoconfigure` |
+| `@WebMvcTest` | `org.springframework.boot.test.autoconfigure.web.servlet` | `org.springframework.boot.webmvc.test.autoconfigure` |
+| `@WebFluxTest` | `org.springframework.boot.test.autoconfigure.web.reactive` | `org.springframework.boot.webflux.test.autoconfigure` |
+| `@MockBean` | `org.springframework.boot.test.mock.mockito` | Replaced by `@MockitoBean` |
+| `@MockitoBean` | *(did not exist in Boot 3)* | `org.springframework.test.context.bean.override.mockito` |
+
+**Note on `@MockBean` → `@MockitoBean`**: Spring Framework 7 introduced `org.springframework.test.context.bean.override.mockito.MockitoBean` (`@MockitoBean`). The Boot 3 `@MockBean` from `org.springframework.boot.test.mock.mockito` is removed in Boot 4. Do a global find-and-replace of `import org.springframework.boot.test.mock.mockito.MockBean` → `import org.springframework.test.context.bean.override.mockito.MockitoBean` and `@MockBean` → `@MockitoBean`.
+
+**`@SpringBootTest` and `@ServiceConnection` are unchanged**: These remain at `org.springframework.boot.test.context.SpringBootTest` and `org.springframework.boot.testcontainers.service.connection.ServiceConnection`.
+
+### Quick Migration Checklist for Test Code
+
+```bash
+# Find all Boot 3 test autoconfigure imports to update
+grep -r "org.springframework.boot.test.autoconfigure" src/test/
+grep -r "org.springframework.boot.test.mock.mockito.MockBean" src/test/
+```
+
+---
+
+## Hibernate 6.x Migration Pitfalls
+
+### 5.1 Sequence Generator Naming (Hibernate 6.0)
+
+Hibernate 6 changed the default sequence naming strategy. Previously, all entities shared `hibernate_sequence`. Now each entity gets `<table_name>_SEQ` by default.
+
+**Impact on tests**: Test data scripts that use `nextval('hibernate_sequence')` break. Either hardcode IDs or update sequence references.
+
+```sql
+-- Before (Hibernate 5.x):
+INSERT INTO orders (id, ...) VALUES (nextval('hibernate_sequence'), ...);
+
+-- After (Hibernate 6.x):
+INSERT INTO orders (id, ...) VALUES (nextval('orders_SEQ'), ...);
+```
+
+To restore the old behavior (not recommended — breaks multi-entity sequences):
+```properties
+spring.jpa.properties.hibernate.id.new_generator_mappings=false
+```
+
+**Source**: [Thorben Janssen — 8 Things to Know When Migrating to Hibernate 6.x](https://thorben-janssen.com/things-to-know-when-migrating-to-hibernate-6-x/)
+
+---
+
+### 5.2 Jakarta Persistence Package Migration (Hibernate 6.0)
+
+All `javax.persistence.*` imports changed to `jakarta.persistence.*`. This is a global find-and-replace but affects all test code, `TestEntityManager` usage, and SQL scripts that reference JPA-mapped types.
+
+```java
+// Before (javax):
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+// After (jakarta):
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+```
+
+Also affects `@Entity`, `@Id`, `@Column`, `@OneToMany`, `@Transactional` (the JPA one), etc.
+
+**Note**: `org.springframework.transaction.annotation.Transactional` (Spring's `@Transactional`) did NOT change — only the JPA `javax.transaction.Transactional` moved to `jakarta.transaction.Transactional`.
+
+---
+
+### 5.3 HQL Column Names Disallowed (Hibernate 6.0)
+
+Hibernate 6 only accepts JPA attribute names in HQL/JPQL — database column names are rejected. Tests with custom JPQL that used column names instead of field names will fail.
+
+```java
+// BROKEN in Hibernate 6 (uses column name "first_name" instead of field name "firstName"):
+@Query("SELECT u FROM User u WHERE u.first_name = :name")
+
+// FIXED (use JPA attribute name):
+@Query("SELECT u FROM User u WHERE u.firstName = :name")
+```
+
+Symptom: `QueryException: No data was found for query ... first_name is not mapped`.
+
+---
+
+### 5.4 Instant and Duration Mapping Changes (Hibernate 6.0+)
+
+`Instant` and `Duration` type mappings changed between Hibernate 5 and 6. Entities using these types may behave differently if the schema was generated by an older Hibernate version.
+
+Common symptom: timezone handling differences for `Instant` fields when migrating from `TIMESTAMP` without timezone to `TIMESTAMP WITH TIME ZONE`.
+
+---
+
+### 5.5 ClassCastException with JOIN FETCH and Inheritance (Hibernate 6.0+)
+
+A known Hibernate 6 issue: queries using `JOIN FETCH` with entity inheritance hierarchies can throw `ClassCastException` when multiple inheritance branches are fetched in a single query.
+
+**Symptom**:
+```
+java.lang.ClassCastException: class CollectionExecution cannot be cast to class ReportExecution
+```
+
+**Workaround**: Avoid `JOIN FETCH` across multiple inheritance branches. Use subclass-specific repositories instead, or load the inheritance hierarchy in separate queries.
+
+For `SINGLE_TABLE` inheritance testing, fetch one discriminator type at a time:
+
+```java
+// PROBLEMATIC: JOIN FETCH with mixed inheritance branches
+@Query("SELECT j FROM JobExecution j JOIN FETCH j.steps")
+List<JobExecution> findAllWithSteps();
+
+// SAFER: fetch by concrete subtype
+@Query("SELECT c FROM CollectionExecution c JOIN FETCH c.steps")
+List<CollectionExecution> findCollectionsWithSteps();
+```
+
+**Source**: [Hibernate Discourse — ClassCastException in Hibernate 6 when join fetch is used with entity inheritance](https://discourse.hibernate.org/t/classcastexception-in-hibernate-6-when-join-fetch-is-used-in-a-query-with-entity-inheritance/7815)
+
+---
+
+### 5.6 @CreationTimestamp + @UuidGenerator Pitfall (Hibernate 6.x)
+
+**Discovered in tuvium-collector Step 3.8**.
+
+`org.hibernate.annotations.UuidGenerator` sets the entity ID at `persist()` time. Subsequent `save()` calls on an already-persisted entity trigger `merge()` (not `persist()`), which can produce a spurious `UPDATE` with a `null` `createTime` if `@CreationTimestamp` is used.
+
+**Root cause**: `merge()` does not trigger `@CreationTimestamp` initialization. If `createTime` is null at merge time, Hibernate writes null to the database.
+
+**Fix**: Initialize timestamp fields with a default value in the field declaration:
+
+```java
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+
+@Entity
+public class AuditedEntity {
+
+    @Id
+    @UuidGenerator
+    private UUID id;
+
+    @CreationTimestamp
+    private Instant createTime = Instant.now(); // REQUIRED: initialize for merge() safety
+
+    @UpdateTimestamp
+    private Instant updateTime = Instant.now(); // Same fix applies
+}
+```
+
+**Test pattern that exposes this bug**:
+
+```java
+@Test
+void save_twiceOnSameEntity_preservesCreationTimestamp() {
+    AuditedEntity entity = new AuditedEntity();
+    AuditedEntity first = repository.saveAndFlush(entity);
+    em.clear();
+
+    // Reload and save again (simulates service calling save() on a detached entity)
+    AuditedEntity reloaded = repository.findById(first.getId()).orElseThrow();
+    reloaded.setName("Updated");
+    AuditedEntity second = repository.saveAndFlush(reloaded);
+    em.clear();
+
+    AuditedEntity final_ = repository.findById(first.getId()).orElseThrow();
+    assertThat(final_.getCreateTime()).isNotNull(); // Fails without Instant.now() default
+    assertThat(final_.getCreateTime()).isEqualTo(first.getCreateTime()); // Same creation time
+}
+```
+
+---
+
+### 5.7 @QueryHint HINT_READ_ONLY String/Boolean Issue (Hibernate 6.6.x)
+
+**Discovered in tuvium-collector** (see also `references/lazy-loading-tests.md` for the fix).
+
+`@QueryHint(name = HINT_READ_ONLY, value = "true")` on `findById` causes `ClassCastException` in Hibernate 6.6.x.
+
+**Root cause**: Spring Data JPA's `findById` uses `EntityManager.find()`, which passes hints as `Map<String, Object>`. The `@QueryHints` annotation always passes values as `String`, but Hibernate 6.6 requires `Boolean` for `org.hibernate.readOnly` when used with `em.find()`.
+
+```java
+// BROKEN in Hibernate 6.6.x:
+@QueryHints(@QueryHint(name = org.hibernate.jpa.QueryHints.HINT_READ_ONLY, value = "true"))
+Optional<T> findById(ID id);
+// ClassCastException: java.lang.String cannot be cast to java.lang.Boolean
+```
+
+**Fix**: Use `@Transactional(readOnly = true)` on the service layer instead:
+
+```java
+@Service
+@Transactional(readOnly = true)
+public class ReadService {
+    public Optional<T> findById(ID id) {
+        return repository.findById(id);
+    }
+}
+```
+
+Since Spring Framework 5.1, `@Transactional(readOnly = true)` propagates to the Hibernate `Session` via `Session.setDefaultReadOnly(true)`, providing the same optimization without the type mismatch.
+
+**Related issues**:
+- [Spring Data JPA #1503 — HINT_READONLY not applied to findOne()](https://github.com/spring-projects/spring-data-jpa/issues/1503)
+- [Spring Framework #21494 — Propagate read-only to Hibernate Session](https://github.com/spring-projects/spring-framework/issues/21494)
+
+---
+
+## Hibernate 7.x Notes (Spring Boot 4)
+
+Spring Boot 4 ships with Hibernate 7.x. Hibernate 7 is largely a continuation of Hibernate 6.x with refinements:
+
+- Jakarta persistence requirement continues (no `javax.persistence` support)
+- Sequence naming strategy from 6.0 remains (`<table_name>_SEQ`)
+- HQL column name restriction from 6.0 remains
+- The `@CreationTimestamp` + `@UuidGenerator` initialization fix (5.6) applies equally
+
+Check the [Hibernate 7.0 Migration Guide](https://docs.hibernate.org/orm/7.0/migration-guide/) for new pitfalls specific to 7.0.
+
+---
+
+## Migration Checklist for Tests
+
+When migrating from Boot 3 + Hibernate 5/6 to Boot 4 + Hibernate 7:
+
+- [ ] Update all `org.springframework.boot.test.autoconfigure.orm.jpa.*` imports to Boot 4 packages
+- [ ] Replace `@MockBean` with `@MockitoBean` from `org.springframework.test.context.bean.override.mockito`
+- [ ] Grep for `javax.persistence` and replace with `jakarta.persistence`
+- [ ] Grep for `nextval('hibernate_sequence')` in test SQL scripts
+- [ ] Grep for HQL/JPQL using column names (e.g., `snake_case` in queries against `camelCase` fields)
+- [ ] Check entities with `@UuidGenerator` + `@CreationTimestamp` — add `= Instant.now()` defaults
+- [ ] Remove `@QueryHint(HINT_READ_ONLY)` on `findById` — use `@Transactional(readOnly = true)` instead
+- [ ] Test `SINGLE_TABLE` inheritance queries — avoid `JOIN FETCH` across multiple branches
+
+**Sources**:
+- [Thorben Janssen — 8 Things to Know When Migrating to Hibernate 6.x](https://thorben-janssen.com/things-to-know-when-migrating-to-hibernate-6-x/)
+- [Hibernate 6.0 Migration Guide](https://docs.hibernate.org/orm/6.0/migration-guide/)
+- [Hibernate 6.6 Migration Guide](https://docs.jboss.org/hibernate/orm/6.6/migration-guide/migration-guide.html)
