@@ -271,13 +271,57 @@ class GreetingControllerTest {
 
 ---
 
+## Boot 4.x MockMvcTester Pattern (preferred for MVC/Thymeleaf apps)
+
+`MockMvcTester` is auto-configured by `@WebMvcTest` in Boot 4.x. No extra annotation needed.
+Import: `org.springframework.test.web.servlet.assertj.MockMvcTester`
+
+```java
+@WebMvcTest(VetController.class)
+class VetControllerTest {
+
+    @Autowired
+    private MockMvcTester mvc;
+
+    @MockitoBean
+    private VetRepository vetRepository;
+
+    @Test
+    void showVetList_returnsHtmlView() {
+        given(vetRepository.findAll(any(Pageable.class))).willReturn(new PageImpl<>(buildVetList()));
+
+        assertThat(mvc.get().uri("/vets.html")).hasStatusOk().hasViewName("vets/vetList");
+    }
+
+    @Test
+    void showVetList_hasPaginationAttributes() {
+        given(vetRepository.findAll(any(Pageable.class))).willReturn(new PageImpl<>(buildVetList()));
+
+        assertThat(mvc.get().uri("/vets.html")).hasStatusOk()
+            .model()
+            .containsKey("currentPage")
+            .containsKey("totalPages")
+            .containsKey("listVets");
+    }
+}
+```
+
+Key `MockMvcTester` assertions:
+- `.hasStatusOk()`, `.hasStatus(HttpStatus.CREATED)`, `.hasStatus4xxClientError()`
+- `.hasViewName("view/name")` — for Thymeleaf/MVC view name assertions
+- `.model().containsKey("attr")`, `.model().attribute("attr", value)`
+- `.hasBodyTextEqualTo("...")`, `.bodyJson().extractingPath("$.field").isEqualTo("value")`
+
+---
+
 ## Boot 3.x → 4.x Migration Table
 
 | Area | Boot 3.x | Boot 4.x |
 |---|---|---|
 | `@WebMvcTest` import | `org.springframework.boot.test.autoconfigure.web.servlet` | `org.springframework.boot.webmvc.test.autoconfigure` |
 | `@MockBean` | `org.springframework.boot.test.mock.mockito.MockBean` | `@MockitoBean` from `org.springframework.test.context.bean.override.mockito` |
-| Test client | `MockMvc` | `MockMvc` or `RestTestClient` via `@AutoConfigureRestTestClient` |
+| Test client (MVC) | `MockMvc` | `MockMvc` (still valid) **or** `MockMvcTester` (preferred — AssertJ-based, no checked exceptions) |
+| Test client (REST) | `MockMvc` | `RestTestClient` via `@AutoConfigureRestTestClient` (WebTestClient-style) |
 | `ProblemDetail` | Opt-in (`spring.mvc.problemdetails.enabled=true`) | Default for standard exceptions |
 | Servlet imports | `jakarta.servlet.*` | Same |
 
