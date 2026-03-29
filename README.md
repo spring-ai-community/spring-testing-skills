@@ -28,20 +28,8 @@ Add the dependency to your `pom.xml`:
 <dependency>
   <groupId>org.springaicommunity</groupId>
   <artifactId>spring-testing-skills</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.9.0</version>
 </dependency>
-```
-
-Snapshot repository:
-
-```xml
-<repositories>
-  <repository>
-    <id>central-snapshots</id>
-    <url>https://central.sonatype.com/repository/maven-snapshots/</url>
-    <snapshots><enabled>true</enabled></snapshots>
-  </repository>
-</repositories>
 ```
 
 ### Extract Skills to Your Agent
