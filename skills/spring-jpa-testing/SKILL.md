@@ -1,11 +1,13 @@
 ---
 name: spring-jpa-testing
-description: "Use this skill proactively when about to write tests for a project containing JpaRepository, @Entity, or spring-boot-starter-data-jpa — even before the first test file is created. Also triggers when the user asks to write tests for a JPA repository, test a Spring Data query, set up @DataJpaTest with Testcontainers, migrate Hibernate 6 tests, debug transaction rollback in tests, test lazy loading behavior, fix N+1 issues found in tests, test a @Modifying bulk update, test entity inheritance with SINGLE_TABLE, or understand the @DataJpaTest vs @SpringBootTest trade-off. Also triggers on: org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest, org.springframework.data.jpa.repository.JpaRepository, jakarta.persistence.EntityManager, org.springframework.boot.jpa.test.autoconfigure.TestEntityManager, org.springframework.boot.testcontainers.service.connection.ServiceConnection, org.testcontainers.containers.PostgreSQLContainer, @Transactional in tests, @ServiceConnection, @AutoConfigureTestDatabase, clearAutomatically, @Modifying, Hibernate 6.x, Hibernate 7.x, flush and clear in tests."
+description: "@DataJpaTest requires TestEntityManager + flush()/clear() before assertions — without this, tests read from Hibernate L1 cache and pass falsely. Read before writing any JPA test. Triggers: @DataJpaTest, JpaRepository, TestEntityManager, @ServiceConnection, Testcontainers, @Modifying, Hibernate 6/7, @AutoConfigureTestDatabase, flush and clear in tests, @Transactional in tests, jakarta.persistence.EntityManager."
 version: 0.1.0
 license: Apache-2.0
 ---
 
 # Spring JPA Testing
+
+CRITICAL: `@DataJpaTest` requires `TestEntityManager` for test data setup and `flush()`+`clear()` before read assertions. Tests that skip this read from the Hibernate L1 cache and produce false-passing tests — the query is never executed against the database. See "Critical Rules" below.
 
 **Signals**: `@DataJpaTest`, `JpaRepository`, `EntityManager`, `TestEntityManager`, `@ServiceConnection`, `PostgreSQLContainer`, `@AutoConfigureTestDatabase`, `@Modifying`, `clearAutomatically`, Testcontainers, Hibernate 6, Hibernate 7
 
@@ -15,6 +17,39 @@ license: Apache-2.0
 - Spring Framework 6.x / Spring Framework 7.x
 - Hibernate 6.x / Hibernate 7.x
 - JUnit 5, Testcontainers 1.19+
+
+## Critical Rules — Always Apply in @DataJpaTest
+
+**1. Use TestEntityManager for test data setup — never Mockito mocks.**
+`@DataJpaTest` provides a real in-memory database. Mocking the repository defeats the purpose.
+Use `@Autowired TestEntityManager em` and `em.persist()` / `em.persistAndFlush()` to insert test data.
+Do NOT use the repository under test for setup — that creates circular logic where a bug in the repository masks both setup and assertion failures.
+
+**2. Always flush() and clear() before read assertions.**
+After persisting test data, call `em.flush()` then `em.clear()` before querying through the repository.
+Without flush, SQL may never reach the database. Without clear, the repository returns entities from
+the Hibernate L1 cache — your query is never actually executed against the database.
+
+```java
+@DataJpaTest
+class OrderRepositoryTest {
+    @Autowired TestEntityManager em;
+    @Autowired OrderRepository orders;
+
+    @Test
+    void findByStatus_returnsMatching() {
+        em.persist(new Order("pending"));
+        em.persist(new Order("shipped"));
+        em.flush();   // SQL hits the database
+        em.clear();   // L1 cache evicted — forces real DB read
+
+        List<Order> result = orders.findByStatus("pending");
+        assertThat(result).hasSize(1);
+    }
+}
+```
+
+See `references/transactional-tests.md` for full patterns including @Modifying bulk updates, constraint violation testing, and the @Transactional trap.
 
 ## Do NOT Use This Skill When
 

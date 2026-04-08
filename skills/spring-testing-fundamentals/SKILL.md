@@ -1,6 +1,6 @@
 ---
 name: spring-testing-fundamentals
-description: "Use this skill when the user asks about testing patterns that apply across all Spring test types, AssertJ assertion idioms, Mockito or BDDMockito setup, argument matchers, ArgumentCaptor, UnnecessaryStubbingException, strict stubbing, @MockitoBean vs @MockitoSpyBean, context caching, the testing pyramid, choosing between @WebMvcTest/@DataJpaTest/@SpringBootTest, Boot 4 annotation migration, or universal test anti-patterns. Also use as the default fallback when no specific slice annotation (@DataJpaTest, @WebMvcTest, @WebFluxTest) is present in the question. Triggers on: org.assertj.core.api.Assertions, assertThat, isEqualTo, isInstanceOf, extracting, assertThatThrownBy, org.mockito.BDDMockito, given/willReturn, then(mock).should, ArgumentCaptor, @Captor, org.springframework.test.context.bean.override.mockito.MockitoBean, @MockitoSpyBean, @DirtiesContext, context cache, testing pyramid, Andy Wilkinson testing."
+description: "Boot 4 renamed @MockBean to @MockitoBean, moved test slice annotations to new packages, and changed context caching behavior. Read for correct AssertJ/BDDMockito idioms and Boot 4 migration. Default fallback when no specific slice annotation is present. Triggers: assertThat, BDDMockito, ArgumentCaptor, @MockitoBean, @MockitoSpyBean, @DirtiesContext, UnnecessaryStubbingException, testing pyramid, context cache."
 version: 0.1.0
 license: Apache-2.0
 ---

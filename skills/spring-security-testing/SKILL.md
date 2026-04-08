@@ -1,6 +1,6 @@
 ---
 name: spring-security-testing
-description: "Use this skill when the user asks to test authentication, test authorization rules, test role-based access control, test a secured endpoint, set up @WithMockUser, test CSRF protection, test JWT resource server endpoints, test OAuth2 login, test @PreAuthorize method security, mock a user in a Spring Security test, or write tests that verify 401 Unauthorized or 403 Forbidden responses. Also triggers on: org.springframework.security.test.context.support.WithMockUser, org.springframework.security.test.context.support.WithUserDetails, org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors, csrf(), jwt(), oauth2Login(), mockOidcLogin(), @WithSecurityContext, SecurityFilterChain, hasRole, hasAuthority, AccessDeniedException, SCOPE_, JwtAuthenticationToken."
+description: "Spring Security 7 changed method security defaults and CSRF handling — tests using hasRole() or csrf() may need updates. Read before testing authentication, authorization, or secured endpoints. Triggers: @WithMockUser, csrf(), jwt(), oauth2Login(), SecurityFilterChain, @PreAuthorize, AccessDeniedException, @WithUserDetails, @WithSecurityContext, hasRole, hasAuthority, SCOPE_, JwtAuthenticationToken."
 version: 0.1.0
 license: Apache-2.0
 ---

@@ -1,6 +1,6 @@
 ---
 name: spring-websocket-testing
-description: "Use this skill when the user asks to test a WebSocket endpoint, test a STOMP endpoint, test @MessageMapping handlers, test a SockJS connection, test real-time messaging, test @SendToUser delivery, use WebSocketStompClient in tests, or debug WebSocket connection timeouts in tests. Also triggers on: org.springframework.web.socket.messaging.WebSocketStompClient, org.springframework.messaging.simp.stomp.StompSession, org.springframework.messaging.simp.stomp.StompFrameHandler, org.springframework.web.socket.client.standard.StandardWebSocketClient, @SpringBootTest(webEnvironment = RANDOM_PORT) with WebSocket, BlockingQueue for STOMP, CountDownLatch in WebSocket tests, session.subscribe, session.send, /topic/, /queue/, /app/, @SendToUser, @MessageMapping."
+description: "WebSocket tests require @SpringBootTest(RANDOM_PORT) and async message handling — @WebMvcTest won't work. Timeout and session leak traps are common. Read before testing STOMP or WebSocket. Triggers: WebSocketStompClient, StompSession, @MessageMapping, @SendToUser, BlockingQueue, /topic/, /queue/, CountDownLatch, session.subscribe, session.send."
 version: 0.1.0
 license: Apache-2.0
 ---

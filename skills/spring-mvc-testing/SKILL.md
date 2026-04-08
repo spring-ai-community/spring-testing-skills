@@ -1,6 +1,6 @@
 ---
 name: spring-mvc-testing
-description: "Use this skill when the user asks to test a REST controller, test an HTTP endpoint, set up @WebMvcTest, use MockMvc to test a Spring MVC controller, test request validation, test @RestControllerAdvice exception handlers, test multipart file upload endpoints, test JSON response structure with jsonPath, or migrate MockMvc tests to Boot 4 RestTestClient. Also triggers on: org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest, org.springframework.test.web.servlet.MockMvc, org.springframework.test.web.servlet.request.MockMvcRequestBuilders, org.springframework.test.web.servlet.result.MockMvcResultMatchers, @AutoConfigureMockMvc, @RestController, @RequestMapping, @GetMapping, @PostMapping, @PutMapping, @DeleteMapping, jsonPath, objectMapper.writeValueAsString, status().isOk(), contentType(APPLICATION_JSON)."
+description: "Boot 4+ replaced MockMvc assertions with MockMvcTester — incompatible API your training data gets wrong. Read before writing any @WebMvcTest. Triggers: @WebMvcTest, MockMvc, MockMvcTester, @RestController, jsonPath, @GetMapping, @PostMapping, @AutoConfigureMockMvc, MockMvcRequestBuilders, status().isOk(), @RestControllerAdvice, contentType(APPLICATION_JSON)."
 version: 0.1.0
 license: Apache-2.0
 ---

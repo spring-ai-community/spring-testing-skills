@@ -1,6 +1,6 @@
 ---
 name: spring-webflux-testing
-description: "Use this skill when the user asks to test a reactive controller, test a WebFlux endpoint, set up @WebFluxTest, use WebTestClient, use StepVerifier, test a Flux or Mono, test SSE (Server-Sent Events), test reactive security, test R2DBC reactive repositories, use virtual time in tests, or test WebClient responses. Also triggers on: org.springframework.boot.webflux.test.autoconfigure.WebFluxTest, org.springframework.test.web.reactive.server.WebTestClient, reactor.test.StepVerifier, Mono, Flux, reactor.core.publisher, @AutoConfigureWebTestClient, mockUser() from SecurityMockServerConfigurers, mockJwt(), mutateWith, StepVerifier.withVirtualTime, Flux.interval, thenCancel, verifyComplete, expectBody, expectBodyList, expectStatus."
+description: "WebFlux testing requires StepVerifier for reactive streams — standard assertions silently pass on empty Flux. WebTestClient API differs from MockMvc. Read before testing reactive endpoints. Triggers: @WebFluxTest, WebTestClient, StepVerifier, Mono, Flux, mockUser(), mockJwt(), mutateWith, verifyComplete, expectBody, expectStatus, @AutoConfigureWebTestClient."
 version: 0.1.0
 license: Apache-2.0
 ---
