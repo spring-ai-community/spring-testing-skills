@@ -8,7 +8,6 @@ AI coding agents (Claude Code, Kiro, etc.) via the [SkillsJars](https://skillsja
 
 | Skill | Covers |
 |-------|--------|
-| `spring-testing-router` | Meta-skill: routes "help me test my Spring app" prompts to the right domain skill |
 | `spring-jpa-testing` | `@DataJpaTest`, Testcontainers + `@ServiceConnection`, Hibernate 6/7 pitfalls, entity lifecycle, lazy loading, N+1, SINGLE_TABLE inheritance |
 | `spring-mvc-testing` | `@WebMvcTest`, `MockMvc`, `jsonPath`, validation, `@RestControllerAdvice`, Boot 4 `RestTestClient` |
 | `spring-security-testing` | `@WithMockUser`, CSRF, JWT (`jwt()` post-processor), OAuth2, `@PreAuthorize` method security |

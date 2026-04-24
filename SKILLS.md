@@ -1,12 +1,11 @@
 # Skills Catalog
 
-Agent-facing catalog of all skills in this repository. Use the routing table below to identify which skill to load.
+Agent-facing catalog of all skills in this repository. Each skill's SKILL.md frontmatter description controls when the agent loads it.
 
 ## Skills
 
 | Skill | Covers | Load When |
 |-------|--------|-----------|
-| `spring-testing-router` | Meta-skill: routes to the right domain skill | User says "help me test my Spring app" without specifying a domain |
 | `spring-jpa-testing` | `@DataJpaTest`, Testcontainers, `@ServiceConnection`, `@Transactional` traps, flush/clear, lazy loading, N+1, SINGLE_TABLE inheritance, Hibernate 6/7 migration | Testing JPA repositories, Spring Data queries, database persistence |
 | `spring-mvc-testing` | `@WebMvcTest`, `MockMvc`, `jsonPath`, request validation, `@RestControllerAdvice`, multipart, Boot 4 `RestTestClient` | Testing REST controllers, HTTP endpoints |
 | `spring-security-testing` | `@WithMockUser`, `@WithUserDetails`, CSRF, JWT (`jwt()` post-processor), OAuth2, `@PreAuthorize` method security | Testing authentication, authorization, security rules |
